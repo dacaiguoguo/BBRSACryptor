@@ -187,6 +187,85 @@
     return nil;
 }
 
+- (int)maxEncryptBlockFromRsaPaddingType:(RSA_PADDING_TYPE)type rsaSize:(int)size
+{
+
+    int ret = 0;
+    switch (type) {
+        case RSA_PADDING_TYPE_NONE:
+        {
+            ret = size;
+        }
+            break;
+        case RSA_PADDING_TYPE_PKCS1:
+        {
+            ret = size-11;
+
+        }
+            break;
+        case RSA_PADDING_TYPE_SSLV23:
+        {
+            ret = size;
+#warning test by dacaiguoguo to do
+        }
+            break;
+            
+        default:
+        {
+            return 0;
+        }
+            break;
+    }
+    return ret;
+}
+
+- (NSData *)encryptWithPublicKeyUsingPadding:(RSA_PADDING_TYPE)padding plainHugeData:(NSData *)plainData
+{
+    NSAssert(_rsaPublic != NULL, @"You should import public key first");
+    
+    if ([plainData length])
+    {
+        int inputLen = (int)[plainData length];
+        NSMutableData *outData = [NSMutableData new];
+        
+        int clen = RSA_size(_rsaPublic);
+        int maxBlockSize = [self maxEncryptBlockFromRsaPaddingType:padding rsaSize:clen];
+        for (int offSet = 0; offSet < inputLen; offSet += maxBlockSize) {
+            
+            if (inputLen - offSet > maxBlockSize) {
+                unsigned char *cache = malloc(maxBlockSize);
+                
+                [plainData getBytes:cache range:NSMakeRange(offSet, maxBlockSize)];
+                
+                unsigned char *cipherBuffer = calloc(clen, sizeof(unsigned char));
+                
+                RSA_public_encrypt(maxBlockSize,cache,cipherBuffer, _rsaPublic,  padding);
+                
+                NSData *cipherData = [[NSData alloc] initWithBytes:cipherBuffer length:clen];
+                [outData appendData:cipherData];
+                free(cipherBuffer);
+                
+            } else {
+                unsigned char *cache = malloc(inputLen - offSet);
+                
+                [plainData getBytes:cache range:NSMakeRange(offSet, inputLen - offSet)];
+                
+                unsigned char *cipherBuffer = calloc(clen, sizeof(unsigned char));
+                
+                RSA_public_encrypt(inputLen - offSet,cache,cipherBuffer, _rsaPublic,  padding);
+                
+                NSData *cipherData = [[NSData alloc] initWithBytes:cipherBuffer length:clen];
+                [outData appendData:cipherData];
+                free(cipherBuffer);
+            }
+        }
+        return outData;
+        
+    }
+    
+    return nil;
+}
+
 - (NSData *)encryptWithPublicKeyUsingPadding:(RSA_PADDING_TYPE)padding plainData:(NSData *)plainData
 {
     NSAssert(_rsaPublic != NULL, @"You should import public key first");

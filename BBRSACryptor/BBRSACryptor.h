@@ -4,7 +4,7 @@
 //
 //  Created by liukun on 14-3-21.
 //  Copyright (c) 2014年 liukun. All rights reserved.
-//
+// http://blog.cnbluebox.com/blog/2014/03/19/rsajia-mi/
 
 #import <Foundation/Foundation.h>
 #import <openssl/rsa.h>
@@ -61,6 +61,10 @@ typedef NS_ENUM(NSInteger, RSA_PADDING_TYPE) {
  @return    private key base64 encoded
  */
 - (NSString *)base64EncodedPrivateKey;
+
+
+
+- (NSData *)encryptWithPublicKeyUsingPadding:(RSA_PADDING_TYPE)padding plainHugeData:(NSData *)plainData;
 
 /**
  @abstract  encrypt text using RSA public key
